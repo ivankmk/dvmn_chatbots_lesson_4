@@ -4,6 +4,7 @@ import logging
 from dotenv import load_dotenv
 import os
 import json
+import random
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,10 +20,12 @@ def start(bot, update):
 
     update.message.reply_text('Hello!', reply_markup=reply_markup)
 
-def get_question_and_answer(file):
+
+def get_random_question(file):
     with open(file) as f:
         dictdump = json.loads(f.read())
-        return list(dictdump.items())[0]
+        question, _ = list(dictdump.items())[random.randint(0, 100)]
+        return question
 
 
 def dull(bot, update):
@@ -33,8 +36,8 @@ def dull(bot, update):
 def echo(bot, update):
     """Echo the user message."""
     if update.message.text == 'Новый вопрос':
-        quest, _ = get_question_and_answer('questions.json')
-        update.message.reply_text(quest)
+        question = get_random_question('questions.json')
+        update.message.reply_text(question)
     else:
         update.message.reply_text(update.message.text)
 
