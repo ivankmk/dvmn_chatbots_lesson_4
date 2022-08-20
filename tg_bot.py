@@ -30,11 +30,16 @@ def start(bot, update):
     update.message.reply_text('Hello!', reply_markup=reply_markup)
 
 
+def question_cleaner(raw_question):
+    pass
+
+
 def get_random_question(file):
     with open(file) as f:
         dictdump = json.loads(f.read())
         question, answer = list(dictdump.items())[random.randint(0, 100)]
-        return {'question': question, 'answer': answer}
+        answer_cleaned = answer.replace('Ответ:', '').strip()
+        return {'question': question, 'answer': answer_cleaned}
 
 
 def user_action(bot, update):
@@ -43,11 +48,20 @@ def user_action(bot, update):
     if update.message.text == 'Новый вопрос':
         q_a = get_random_question('questions.json')
         question = q_a['question']
+        answer = q_a['answer']
+        answer_shorted = answer.split('.')[0] or answer.split('(')[0]
         update.message.reply_text(question)
-        r.set(tg_login, question)
+        r.set(tg_login, answer_shorted)
+        print(answer)
 
     else:
-        pass
+        if update.message.text.lower() == r.get(tg_login).lower():
+
+            update.message.reply_text(
+                'Правильно! Поздравляю!'
+                'Для следующего вопроса нажми «Новый вопрос»”')
+        else:
+            update.message.reply_text('Неправильно… Попробуешь ещё раз?')
 
 
 def error(bot, update, error):
