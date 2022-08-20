@@ -1,11 +1,20 @@
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+import redis
 import logging
 from dotenv import load_dotenv
 import os
 import json
 import random
 
+load_dotenv()
+r = redis.Redis(
+    host=os.getenv('REDIS_HOST'),
+    port=os.getenv('REDIS_PORT'),
+    username=os.getenv('REDIS_USERNAME'),
+    password=os.getenv('REDIS_PASSWORD'),
+    decode_responses=True
+)
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -35,9 +44,12 @@ def dull(bot, update):
 
 def echo(bot, update):
     """Echo the user message."""
+    tg_login = update['message']['chat']['username']
     if update.message.text == 'Новый вопрос':
         question = get_random_question('questions.json')
+        r.set(tg_login, question)
         update.message.reply_text(question)
+        print('Read from Redis: ', r.get(tg_login))
     else:
         update.message.reply_text(update.message.text)
 
@@ -48,7 +60,7 @@ def error(bot, update, error):
 
 
 def main():
-    load_dotenv()
+
     updater = Updater(os.getenv('TG_TOKEN'))
     dp = updater.dispatcher
 
