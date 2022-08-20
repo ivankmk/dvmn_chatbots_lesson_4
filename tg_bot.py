@@ -33,25 +33,21 @@ def start(bot, update):
 def get_random_question(file):
     with open(file) as f:
         dictdump = json.loads(f.read())
-        question, _ = list(dictdump.items())[random.randint(0, 100)]
-        return question
+        question, answer = list(dictdump.items())[random.randint(0, 100)]
+        return {'question': question, 'answer': answer}
 
 
-def dull(bot, update):
-    """Send a message when the command /start is issued."""
-    update.message.reply_text('it is Dull!')
-
-
-def echo(bot, update):
+def user_action(bot, update):
     """Echo the user message."""
     tg_login = update['message']['chat']['username']
     if update.message.text == 'Новый вопрос':
-        question = get_random_question('questions.json')
-        r.set(tg_login, question)
+        q_a = get_random_question('questions.json')
+        question = q_a['question']
         update.message.reply_text(question)
-        print('Read from Redis: ', r.get(tg_login))
+        r.set(tg_login, question)
+
     else:
-        update.message.reply_text(update.message.text)
+        pass
 
 
 def error(bot, update, error):
@@ -66,10 +62,9 @@ def main():
 
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("dull", dull))
 
     # on noncommand i.e message - echo the message on Telegram
-    dp.add_handler(MessageHandler(Filters.text, echo))
+    dp.add_handler(MessageHandler(Filters.text, user_action))
 
     dp.add_error_handler(error)
     updater.start_polling()
