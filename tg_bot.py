@@ -1,12 +1,11 @@
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+from telegram.ext import Updater, MessageHandler, Filters, \
+    CommandHandler, ConversationHandler, RegexHandler
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import redis
 import logging
 from dotenv import load_dotenv
 import os
-import json
-import random
-from utils import question_cleaner, get_random_question
+from utils import get_random_question
 
 load_dotenv()
 r = redis.Redis(
@@ -22,35 +21,43 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
+GET_QUESTION, GIVE_UP, MY_SCORE, CHECK_RESPOND, USER_COMMUNICATION = range(5)
+
 
 def start(bot, update):
     custom_keyboard = [['Новый вопрос', 'Сдаться'],
                        ['Мой счет']]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
-    update.message.reply_text('Hello!', reply_markup=reply_markup)
+    update.message.reply_text(
+        'Добро пожаловать на викторину!', reply_markup=reply_markup)
+
+    return GET_QUESTION
 
 
-def user_action(bot, update):
+def get_question(bot, update):
     """Echo the user message."""
     tg_login = update['message']['chat']['username']
-    if update.message.text == 'Новый вопрос':
-        q_a = get_random_question()
-        question = q_a['question']
-        answer = q_a['answer']
-        answer_shorted = answer.split('.')[0] or answer.split('(')[0]
-        update.message.reply_text(question)
-        r.set(tg_login, answer_shorted)
-        print(answer)
+    q_a = get_random_question()
+    question = q_a['question']
+    answer = q_a['answer']
+    answer_shorted = answer.split('.')[0] or answer.split('(')[0]
+    update.message.reply_text(question)
+    r.set(tg_login, answer_shorted)
+    print(answer)
+    return CHECK_RESPOND
 
+
+def check_respond(bot, update):
+    tg_login = update['message']['chat']['username']
+    if update.message.text.lower() == r.get(tg_login).lower():
+
+        update.message.reply_text(
+            'Правильно! Поздравляю! '
+            'Для следующего вопроса нажми «Новый вопрос»”')
     else:
-        if update.message.text.lower() == r.get(tg_login).lower():
-
-            update.message.reply_text(
-                'Правильно! Поздравляю! '
-                'Для следующего вопроса нажми «Новый вопрос»”')
-        else:
-            update.message.reply_text('Неправильно… Попробуете ещё раз?')
+        update.message.reply_text('Неправильно… Попробуете ещё раз?')
+        return GET_QUESTION
 
 
 def error(bot, update, error):
@@ -58,16 +65,37 @@ def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
+def cancel(bot, update):
+    user = update.message.from_user
+    logger.info("User %s canceled the conversation.", user.first_name)
+    update.message.reply_text('Bye! I hope we can talk again some day.',
+                              reply_markup=ReplyKeyboardRemove())
+
+    return ConversationHandler.END
+
+
 def main():
 
     updater = Updater(os.getenv('TG_TOKEN'))
     dp = updater.dispatcher
 
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            GET_QUESTION: [RegexHandler('^(Новый вопрос)$', get_question)],
+            CHECK_RESPOND: [MessageHandler(Filters.text, check_respond)]
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
+    dp.add_handler(conv_handler)
+
     # on different commands - answer in Telegram
-    dp.add_handler(CommandHandler("start", start))
+    # dp.add_handler(CommandHandler("start", start))
 
     # on noncommand i.e message - echo the message on Telegram
-    dp.add_handler(MessageHandler(Filters.text, user_action))
+    # dp.add_handler(MessageHandler(Filters.text, user_action))
 
     dp.add_error_handler(error)
     updater.start_polling()
