@@ -6,6 +6,7 @@ import logging
 from dotenv import load_dotenv
 import os
 from utils import get_random_question
+from enum import Enum, auto
 
 load_dotenv()
 r = redis.Redis(
@@ -21,7 +22,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-GET_QUESTION, GIVE_UP, MY_SCORE, CHECK_RESPOND, USER_COMMUNICATION = range(5)
+
+class BotStates(Enum):
+    NEW_QUESTION_REQUEST = auto()
+    GIVE_UP = auto()
+    MY_SCORE = auto()
+    SOLUTION_ATTEMPT = auto()
+    USER_COMMUNICATION = auto()
 
 
 def start(bot, update):
@@ -32,10 +39,10 @@ def start(bot, update):
     update.message.reply_text(
         'Добро пожаловать на викторину!', reply_markup=reply_markup)
 
-    return GET_QUESTION
+    return BotStates.NEW_QUESTION_REQUEST
 
 
-def get_question(bot, update):
+def handle_new_question_request(bot, update):
     """Echo the user message."""
     tg_login = update['message']['chat']['username']
     q_a = get_random_question()
@@ -45,10 +52,10 @@ def get_question(bot, update):
     update.message.reply_text(question)
     r.set(tg_login, answer_shorted)
     print(answer)
-    return CHECK_RESPOND
+    return BotStates.SOLUTION_ATTEMPT
 
 
-def check_respond(bot, update):
+def handle_solution_attempt(bot, update):
     tg_login = update['message']['chat']['username']
     if update.message.text.lower() == r.get(tg_login).lower():
 
@@ -57,7 +64,7 @@ def check_respond(bot, update):
             'Для следующего вопроса нажми «Новый вопрос»”')
     else:
         update.message.reply_text('Неправильно… Попробуете ещё раз?')
-        return GET_QUESTION
+        return NEW_QUESTION_REQUEST
 
 
 def error(bot, update, error):
@@ -82,21 +89,16 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            GET_QUESTION: [RegexHandler('^(Новый вопрос)$', get_question)],
-            CHECK_RESPOND: [MessageHandler(Filters.text, check_respond)]
+            BotStates.NEW_QUESTION_REQUEST: [
+                RegexHandler('^(Новый вопрос)$', handle_new_question_request)],
+            BotStates.SOLUTION_ATTEMPT: [
+                MessageHandler(Filters.text, handle_solution_attempt)]
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
     )
 
     dp.add_handler(conv_handler)
-
-    # on different commands - answer in Telegram
-    # dp.add_handler(CommandHandler("start", start))
-
-    # on noncommand i.e message - echo the message on Telegram
-    # dp.add_handler(MessageHandler(Filters.text, user_action))
-
     dp.add_error_handler(error)
     updater.start_polling()
     updater.idle()
