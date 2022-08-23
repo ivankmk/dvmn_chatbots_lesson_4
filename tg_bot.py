@@ -17,8 +17,10 @@ r = redis.Redis(
     decode_responses=True
 )
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +66,7 @@ def handle_solution_attempt(bot, update):
             'Для следующего вопроса нажми «Новый вопрос»”')
     else:
         update.message.reply_text('Неправильно… Попробуете ещё раз?')
-        return NEW_QUESTION_REQUEST
+        return BotStates.NEW_QUESTION_REQUEST
 
 
 def error(bot, update, error):
