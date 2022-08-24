@@ -74,8 +74,14 @@ def handle_give_up(bot, update):
     return BotStates.NEW_QUESTION_REQUEST
 
 
+def error(bot, update, error):
+    """Log Errors caused by Updates."""
+    logger.warning('Update "%s" caused error "%s"', update, error)
+
+
 def cancel(bot, update):
-    pass
+    update.message.reply_text('Пока!')
+    return ConversationHandler.END
 
 
 def main():
@@ -100,7 +106,7 @@ def main():
     )
 
     dp.add_handler(conv_handler)
-    # dp.add_error_handler(error)
+    dp.add_error_handler(error)
     updater.start_polling()
     updater.idle()
 
