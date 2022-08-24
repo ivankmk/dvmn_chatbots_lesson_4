@@ -1,6 +1,6 @@
 from telegram.ext import Updater, MessageHandler, Filters, \
     CommandHandler, ConversationHandler, RegexHandler
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import ReplyKeyboardMarkup
 import redis
 import logging
 from dotenv import load_dotenv
@@ -27,10 +27,8 @@ logger = logging.getLogger(__name__)
 
 class BotStates(Enum):
     NEW_QUESTION_REQUEST = auto()
-    GIVE_UP = auto()
     MY_SCORE = auto()
     SOLUTION_ATTEMPT = auto()
-    USER_COMMUNICATION = auto()
 
 
 def start(bot, update):
@@ -45,7 +43,6 @@ def start(bot, update):
 
 
 def handle_new_question_request(bot, update):
-    """Echo the user message."""
     tg_login = update['message']['chat']['username']
     q_a = get_random_question()
     question = q_a['question']
@@ -59,28 +56,26 @@ def handle_new_question_request(bot, update):
 
 def handle_solution_attempt(bot, update):
     tg_login = update['message']['chat']['username']
-    if update.message.text.lower() == r.get(tg_login).lower():
-
+    answer = r.get(tg_login)
+    if update.message.text.lower() == answer.lower():
         update.message.reply_text(
             'Правильно! Поздравляю! '
             'Для следующего вопроса нажми «Новый вопрос»”')
+
     else:
         update.message.reply_text('Неправильно… Попробуете ещё раз?')
         return BotStates.NEW_QUESTION_REQUEST
 
 
-def error(bot, update, error):
-    """Log Errors caused by Updates."""
-    logger.warning('Update "%s" caused error "%s"', update, error)
+def handle_give_up(bot, update):
+    tg_login = update['message']['chat']['username']
+    answer = r.get(tg_login)
+    update.message.reply_text(f'Ответ: {answer}')
+    return BotStates.NEW_QUESTION_REQUEST
 
 
 def cancel(bot, update):
-    user = update.message.from_user
-    logger.info("User %s canceled the conversation.", user.first_name)
-    update.message.reply_text('Bye! I hope we can talk again some day.',
-                              reply_markup=ReplyKeyboardRemove())
-
-    return ConversationHandler.END
+    pass
 
 
 def main():
@@ -92,16 +87,20 @@ def main():
         entry_points=[CommandHandler("start", start)],
         states={
             BotStates.NEW_QUESTION_REQUEST: [
-                RegexHandler('^(Новый вопрос)$', handle_new_question_request)],
+                RegexHandler('^Новый вопрос', handle_new_question_request)],
+
             BotStates.SOLUTION_ATTEMPT: [
-                MessageHandler(Filters.text, handle_solution_attempt)]
+                RegexHandler('^Новый вопрос', handle_new_question_request),
+                RegexHandler('^Сдаться', handle_give_up),
+                MessageHandler(Filters.text, handle_solution_attempt)],
+
         },
 
         fallbacks=[CommandHandler('cancel', cancel)]
     )
 
     dp.add_handler(conv_handler)
-    dp.add_error_handler(error)
+    # dp.add_error_handler(error)
     updater.start_polling()
     updater.idle()
 
