@@ -27,13 +27,11 @@ logger = logging.getLogger(__name__)
 
 class BotStates(Enum):
     NEW_QUESTION_REQUEST = auto()
-    MY_SCORE = auto()
     SOLUTION_ATTEMPT = auto()
 
 
 def start(bot, update):
-    custom_keyboard = [['Новый вопрос', 'Сдаться'],
-                       ['Мой счет']]
+    custom_keyboard = [['Новый вопрос', 'Сдаться']]
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
     update.message.reply_text(
@@ -50,7 +48,6 @@ def handle_new_question_request(bot, update):
     answer_shorted = answer.split('.')[0] or answer.split('(')[0]
     update.message.reply_text(question)
     r.set(tg_login, answer_shorted)
-    print(answer)
     return BotStates.SOLUTION_ATTEMPT
 
 
@@ -60,7 +57,7 @@ def handle_solution_attempt(bot, update):
     if update.message.text.lower() == answer.lower():
         update.message.reply_text(
             'Правильно! Поздравляю! '
-            'Для следующего вопроса нажми «Новый вопрос»”')
+            'Для следующего вопроса нажми «Новый вопрос»')
 
     else:
         update.message.reply_text('Неправильно… Попробуете ещё раз?')
@@ -75,7 +72,6 @@ def handle_give_up(bot, update):
 
 
 def error(bot, update, error):
-    """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
