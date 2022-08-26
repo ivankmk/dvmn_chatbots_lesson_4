@@ -28,8 +28,10 @@ def save_dict_as_json(dict):
         json.dump(dict, fp)
 
 
-def question_cleaner(raw_question):
-    pass
+def answer_shortening(raw_question):
+    shortening = raw_question.split('(')[0]
+    shortening = shortening.split('.')[0]
+    return shortening
 
 
 def generate_json(questions_path_pattern):
