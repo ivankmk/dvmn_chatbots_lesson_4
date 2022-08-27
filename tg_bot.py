@@ -35,7 +35,9 @@ def start(bot, update):
     reply_markup = ReplyKeyboardMarkup(custom_keyboard)
 
     update.message.reply_text(
-        'Добро пожаловать на викторину!', reply_markup=reply_markup)
+        'Добро пожаловать на викторину!',
+        reply_markup=reply_markup
+        )
 
     return BotStates.NEW_QUESTION_REQUEST
 
@@ -81,7 +83,6 @@ def cancel(bot, update):
 
 
 def main():
-
     updater = Updater(os.getenv('TG_TOKEN'))
     dp = updater.dispatcher
 
