@@ -4,7 +4,7 @@ This is the Quiz bot implemented in Telegram and VK.
 
 ## How to use
 
-**In Telegram**
+**In Telegram [https://t.me/dvmn_notificator_bot]**
 
 Begin the game with the command ```/start```
 
