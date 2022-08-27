@@ -4,18 +4,14 @@ This is the Quiz bot implemented in Telegram and VK.
 
 ## How to use
 
+**In Telegram**
+
+Begin the game with the command ```/start```
 
 
-## Usage example
+**in VK**
 
-Telegram
-
-![](misc/tg.gif)
-
-
-VK
-
-![](misc/vk.gif)
+Begin the game by typing ```Привет```
 
 ## How to install
 
@@ -33,7 +29,11 @@ JSON_FILE = "Your JSON file with Questions and Answers"
 VK_TOKEN = "Your VK token"
 ```
 
+**VK**
+
 Create a vk group, in your group, click Manage -> Working with API -> Create key (allow sending messages)
+
+**Telegram**
 
 Create a telegram bot using [@BotFather] (https://telegram.me/botfather). Get your bot token
 
