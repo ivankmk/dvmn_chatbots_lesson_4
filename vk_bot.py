@@ -32,9 +32,6 @@ def handle_new_question_request(event, vk_api, keyboard):
     question = q_a['question']
     answer = q_a['answer']
     answer_shorted = answer_shortening(answer)
-    print(answer)
-    print(20*'-')
-    print(answer_shorted)
     r.set(event.user_id, answer_shorted)
     vk_api.messages.send(
         user_id=event.user_id,

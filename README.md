@@ -1,4 +1,4 @@
-# Technical support chatbots
+# Quiz chatbots
 
 This is the Quiz bot implemented in Telegram and VK.
 
