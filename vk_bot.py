@@ -5,9 +5,9 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import os
 import redis
-from utils import get_random_question, answer_shortening
+from questions_utils import get_random_question, shorten_answer
 
-load_dotenv()
+
 r = redis.Redis(
     host=os.getenv('REDIS_HOST'),
     port=os.getenv('REDIS_PORT'),
@@ -27,11 +27,11 @@ def start(event, vk_api, keyboard):
     )
 
 
-def handle_new_question_request(event, vk_api, keyboard):
-    q_a = get_random_question()
+def handle_question_request(event, vk_api, keyboard, file_with_questons):
+    q_a = get_random_question(file_with_questons)
     question = q_a['question']
     answer = q_a['answer']
-    answer_shorted = answer_shortening(answer)
+    answer_shorted = shorten_answer(answer)
     r.set(event.user_id, answer_shorted)
     vk_api.messages.send(
         user_id=event.user_id,
@@ -72,6 +72,8 @@ def handle_give_up(event, vk_api, keyboard):
 
 
 if __name__ == "__main__":
+    load_dotenv()
+    file_with_questons = os.getenv('JSON_FILE')
     vk_session = vk.VkApi(token=os.getenv('VK_TOKEN'))
     vk_api = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
@@ -85,7 +87,8 @@ if __name__ == "__main__":
             if event.text.lower() == 'привет':
                 start(event, vk_api, keyboard)
             elif event.text.lower() == 'новый вопрос':
-                handle_new_question_request(event, vk_api, keyboard)
+                handle_question_request(
+                    event, vk_api, keyboard, file_with_questons)
             elif event.text.lower() == 'сдаться':
                 handle_give_up(event, vk_api, keyboard)
             else:

@@ -5,17 +5,10 @@ import redis
 import logging
 from dotenv import load_dotenv
 import os
-from utils import get_random_question
+from questions_utils import get_random_question
 from enum import Enum, auto
+from functools import partial
 
-load_dotenv()
-r = redis.Redis(
-    host=os.getenv('REDIS_HOST'),
-    port=os.getenv('REDIS_PORT'),
-    username=os.getenv('REDIS_USERNAME'),
-    password=os.getenv('REDIS_PASSWORD'),
-    decode_responses=True
-)
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -37,14 +30,14 @@ def start(bot, update):
     update.message.reply_text(
         'Добро пожаловать на викторину!',
         reply_markup=reply_markup
-        )
+    )
 
     return BotStates.NEW_QUESTION_REQUEST
 
 
-def handle_new_question_request(bot, update):
+def handle_question_request(bot, update, questions):
     tg_login = update['message']['chat']['username']
-    q_a = get_random_question()
+    q_a = get_random_question(questions)
     question = q_a['question']
     answer = q_a['answer']
     answer_shorted = answer.split('.')[0] or answer.split('(')[0]
@@ -83,17 +76,23 @@ def cancel(bot, update):
 
 
 def main():
+    questions = os.getenv('JSON_FILE')
     updater = Updater(os.getenv('TG_TOKEN'))
     dp = updater.dispatcher
-
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
             BotStates.NEW_QUESTION_REQUEST: [
-                RegexHandler('^Новый вопрос', handle_new_question_request)],
+                RegexHandler('^Новый вопрос',
+                             partial(handle_question_request,
+                                     questions=questions)
+                             )
+            ],
 
             BotStates.SOLUTION_ATTEMPT: [
-                RegexHandler('^Новый вопрос', handle_new_question_request),
+                RegexHandler('^Новый вопрос',
+                             partial(handle_question_request,
+                                     questions=questions)),
                 RegexHandler('^Сдаться', handle_give_up),
                 MessageHandler(Filters.text, handle_solution_attempt)],
 
@@ -109,4 +108,12 @@ def main():
 
 
 if __name__ == '__main__':
+    load_dotenv()
+    r = redis.Redis(
+        host=os.getenv('REDIS_HOST'),
+        port=os.getenv('REDIS_PORT'),
+        username=os.getenv('REDIS_USERNAME'),
+        password=os.getenv('REDIS_PASSWORD'),
+        decode_responses=True
+    )
     main()

@@ -1,17 +1,14 @@
 import glob
 import json
 from dotenv import load_dotenv
-import os
 import random
 
 ENCODING = 'KOI8-R'
 
-load_dotenv()
-
 
 def covert_txt_to_dict(filename, encoding):
-    with open(filename, "r", encoding=encoding) as my_file:
-        file_contents = my_file.read()
+    with open(filename, "r", encoding=encoding) as questions_raw:
+        file_contents = questions_raw.read()
     questions = []
     answers = []
     for block in file_contents.split('\n\n'):
@@ -23,31 +20,24 @@ def covert_txt_to_dict(filename, encoding):
     return dict(zip(questions, answers))
 
 
-def save_dict_as_json(dict):
-    with open(os.getenv('JSON_FILE'), 'w') as fp:
-        json.dump(dict, fp)
-
-
-def answer_shortening(raw_question):
-    shortening = raw_question.split('(')[0]
-    shortening = shortening.split('.')[0]
-    return shortening
+def shorten_answer(raw_question):
+    shortened = raw_question.split('(')[0]
+    shortened = shortened.split('.')[0]
+    return shortened
 
 
 def generate_json(questions_path_pattern):
-    """
-    'questions/*.txt'
-    """
     aggregated_dataset = {}
     for filepath in glob.iglob(questions_path_pattern):
         tokenized_file = covert_txt_to_dict(filepath, ENCODING)
         aggregated_dataset.update(tokenized_file)
 
-    save_dict_as_json(aggregated_dataset)
+    with open(aggregated_dataset, 'w') as file_to_save:
+        json.dump(dict, file_to_save)
 
 
-def get_random_question():
-    with open(os.getenv('JSON_FILE')) as f:
+def get_random_question(file_with_questions):
+    with open(file_with_questions) as f:
         dictdump = json.loads(f.read())
         question, answer = list(dictdump.items())[random.randint(0, 100)]
         answer_cleaned = answer.replace('Ответ:', '').strip()
@@ -55,4 +45,4 @@ def get_random_question():
 
 
 if __name__ == "__main__":
-    pass
+    load_dotenv()
