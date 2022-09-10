@@ -36,12 +36,16 @@ def generate_json(questions_path_pattern):
         json.dump(dict, file_to_save)
 
 
-def get_random_question(file_with_questions):
+def get_questions(file_with_questions):
     with open(file_with_questions) as f:
         dictdump = json.loads(f.read())
-        question, answer = list(dictdump.items())[random.randint(0, 100)]
-        answer_cleaned = answer.replace('Ответ:', '').strip()
-        return {'question': question, 'answer': answer_cleaned}
+        return list(dictdump.items())
+
+
+def get_random_question(questions):
+    question, answer = questions[random.randint(0, 100)]
+    answer_cleaned = answer.replace('Ответ:', '').strip()
+    return {'question': question, 'answer': answer_cleaned}
 
 
 if __name__ == "__main__":

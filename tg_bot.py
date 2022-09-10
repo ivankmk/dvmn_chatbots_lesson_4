@@ -5,15 +5,9 @@ import redis
 import logging
 from dotenv import load_dotenv
 import os
-from questions_utils import get_random_question
+from questions_utils import get_random_question, get_questions
 from enum import Enum, auto
 from functools import partial
-
-
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
 
 logger = logging.getLogger(__name__)
 
@@ -35,18 +29,18 @@ def start(bot, update):
     return BotStates.NEW_QUESTION_REQUEST
 
 
-def handle_question_request(bot, update, questions):
+def handle_question_request(bot, update, questions, r):
     tg_login = update['message']['chat']['username']
     q_a = get_random_question(questions)
     question = q_a['question']
     answer = q_a['answer']
-    answer_shorted = answer.split('.')[0] or answer.split('(')[0]
+    short_answer = answer.split('.')[0] or answer.split('(')[0]
     update.message.reply_text(question)
-    r.set(tg_login, answer_shorted)
+    r.set(tg_login, short_answer)
     return BotStates.SOLUTION_ATTEMPT
 
 
-def handle_solution_attempt(bot, update):
+def handle_solution_attempt(bot, update, r):
     tg_login = update['message']['chat']['username']
     answer = r.get(tg_login)
     if update.message.text.lower() == answer.lower():
@@ -59,7 +53,7 @@ def handle_solution_attempt(bot, update):
         return BotStates.NEW_QUESTION_REQUEST
 
 
-def handle_give_up(bot, update):
+def handle_give_up(bot, update, r):
     tg_login = update['message']['chat']['username']
     answer = r.get(tg_login)
     update.message.reply_text(f'Ответ: {answer}')
@@ -76,7 +70,16 @@ def cancel(bot, update):
 
 
 def main():
-    questions = os.getenv('JSON_FILE')
+    logger.info('TG bot is running.')
+    r = redis.Redis(
+        host=os.getenv('REDIS_HOST'),
+        port=os.getenv('REDIS_PORT'),
+        username=os.getenv('REDIS_USERNAME'),
+        password=os.getenv('REDIS_PASSWORD'),
+        decode_responses=True
+    )
+
+    questions = get_questions(os.getenv('JSON_FILE'))
     updater = Updater(os.getenv('TG_TOKEN'))
     dp = updater.dispatcher
     conv_handler = ConversationHandler(
@@ -85,16 +88,19 @@ def main():
             BotStates.NEW_QUESTION_REQUEST: [
                 RegexHandler('^Новый вопрос',
                              partial(handle_question_request,
-                                     questions=questions)
+                                     questions=questions,
+                                     r=r)
                              )
             ],
 
             BotStates.SOLUTION_ATTEMPT: [
                 RegexHandler('^Новый вопрос',
                              partial(handle_question_request,
-                                     questions=questions)),
-                RegexHandler('^Сдаться', handle_give_up),
-                MessageHandler(Filters.text, handle_solution_attempt)],
+                                     questions=questions,
+                                     r=r)),
+                RegexHandler('^Сдаться', partial(handle_give_up, r=r)),
+                MessageHandler(Filters.text, partial(handle_solution_attempt,
+                                                     r=r))],
 
         },
 
@@ -108,12 +114,9 @@ def main():
 
 
 if __name__ == '__main__':
-    load_dotenv()
-    r = redis.Redis(
-        host=os.getenv('REDIS_HOST'),
-        port=os.getenv('REDIS_PORT'),
-        username=os.getenv('REDIS_USERNAME'),
-        password=os.getenv('REDIS_PASSWORD'),
-        decode_responses=True
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO
     )
+    load_dotenv()
     main()
