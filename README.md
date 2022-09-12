@@ -41,8 +41,6 @@ Create a vk group, in your group, click Manage -> Working with API -> Create key
 
 Create a telegram bot using [@BotFather](https://telegram.me/botfather). Get your bot token
 
-Load Quiz questions (https://dvmn.org/media/modules_dist/quiz-questions.zip) and convert txt files into JSON dataset using function generate_json from utils.py
-
 Python3 must already be installed. Then use pip (or pip3, there is a conflict with Python2) to install the dependencies:
 
 ```python
