@@ -31,7 +31,7 @@ VK_TOKEN = "Your VK token"
 
 ### How to get JSON file with questions
 
-The dataset with the collection of questions can be found [here] (https://dvmn.org/media/modules_dist/quiz-questions.zip). After you downdload and unarchive, please use function ```generate_json``` from the file ```questions_utils.py```
+The dataset with the collection of questions can be found [here](https://dvmn.org/media/modules_dist/quiz-questions.zip). After you downdload and unarchive, please use function ```generate_json``` from the file ```questions_utils.py```
 
 **VK**
 
@@ -39,7 +39,7 @@ Create a vk group, in your group, click Manage -> Working with API -> Create key
 
 **Telegram**
 
-Create a telegram bot using [@BotFather] (https://telegram.me/botfather). Get your bot token
+Create a telegram bot using [@BotFather](https://telegram.me/botfather). Get your bot token
 
 Load Quiz questions (https://dvmn.org/media/modules_dist/quiz-questions.zip) and convert txt files into JSON dataset using function generate_json from utils.py
 
