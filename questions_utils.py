@@ -1,6 +1,5 @@
 import glob
 import json
-from dotenv import load_dotenv
 import random
 
 ENCODING = 'KOI8-R'
@@ -39,14 +38,10 @@ def generate_json(questions_path_pattern):
 def get_questions(file_with_questions):
     with open(file_with_questions) as f:
         dictdump = json.loads(f.read())
-        return list(dictdump.items())
+        return dictdump
 
 
 def get_random_question(questions):
-    question, answer = questions[random.randint(0, 100)]
+    question, answer = random.choice(list(questions.items()))
     answer_cleaned = answer.replace('Ответ:', '').strip()
     return {'question': question, 'answer': answer_cleaned}
-
-
-if __name__ == "__main__":
-    load_dotenv()

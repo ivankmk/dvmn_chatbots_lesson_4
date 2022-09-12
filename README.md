@@ -29,6 +29,10 @@ JSON_FILE = "Your JSON file with Questions and Answers"
 VK_TOKEN = "Your VK token"
 ```
 
+### How to get JSON file with questions
+
+The dataset with the collection of questions can be found [here] (https://dvmn.org/media/modules_dist/quiz-questions.zip). After you downdload and unarchive, please use function ```generate_json``` from the file ```questions_utils.py```
+
 **VK**
 
 Create a vk group, in your group, click Manage -> Working with API -> Create key (allow sending messages)

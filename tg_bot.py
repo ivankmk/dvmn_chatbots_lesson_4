@@ -70,6 +70,11 @@ def cancel(bot, update):
 
 
 def main():
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO
+    )
+    load_dotenv()
     logger.info('TG bot is running.')
     r = redis.Redis(
         host=os.getenv('REDIS_HOST'),
@@ -114,9 +119,4 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=logging.INFO
-    )
-    load_dotenv()
     main()
